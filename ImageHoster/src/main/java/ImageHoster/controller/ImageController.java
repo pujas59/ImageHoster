@@ -1,5 +1,6 @@
 package ImageHoster.controller;
 
+import ImageHoster.model.Comment;
 import ImageHoster.model.Image;
 import ImageHoster.model.Tag;
 import ImageHoster.model.User;
@@ -17,6 +18,7 @@ import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import javax.servlet.http.HttpSession;
 import java.io.IOException;
+import java.time.LocalDate;
 import java.util.*;
 
 @Controller
@@ -35,6 +37,20 @@ public class ImageController {
         model.addAttribute("images", images);
         return "images";
     }
+    //method to add comments
+    @RequestMapping(value = "/image/{imageId}/comments", method = RequestMethod.POST)
+    public String newComment(@PathVariable("imageId") int imageId, String comment, HttpSession session) {
+        Image image = imageService.getImage(imageId);
+        Comment newComment = new Comment();
+        newComment.setText(comment);
+        newComment.setCreatedDate(LocalDate.now());
+        User currentUser = (User) session.getAttribute("loggeduser");
+        newComment.setUser(currentUser);
+        newComment.setImage(image);
+        image.getComments().add(newComment);
+        imageService.updateImage(image);
+        return "redirect:/images/" + imageId;
+    }
 
     //This method is called when the details of the specific image with corresponding title are to be displayed
     //The logic is to get the image from the databse with corresponding title. After getting the image from the database the details are shown
@@ -51,6 +67,7 @@ public class ImageController {
         Image image = imageService.getImage(imageId);
         model.addAttribute("image", image);
         model.addAttribute("tags", image.getTags());
+        model.addAttribute("comments",image.getComments());
         return "images/image";
     }
 
